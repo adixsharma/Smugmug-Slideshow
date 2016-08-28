@@ -1,0 +1,21 @@
+{
+	"urls": [
+		{{
+			len = len(images)
+			i = 1
+			for image in images:
+		}}		
+		{
+			"id": "{{=image.row_id}}",
+			"album": "{{=image.album_name}}",
+			"url": "{{=image.url}}",
+			"datetaken": "{{=image.date_taken}}"
+		}
+		{{
+			if not (i == len):
+				response.write(",")
+			pass
+			i += 1;
+			pass}}
+	]
+}
