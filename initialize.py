@@ -1,11 +1,13 @@
 import urllib #import functions from an external library or source
 import xml.etree.ElementTree as ET #imports functions and renames import as ET for efficiency
 import re #imports functions for regular expressions
-import sqlite3 as lite #imports functions and renames import as ET for efficiency
+import sqlite3 as lite #imports functions and renames import as lite for efficiency
 import random
 import numpy
 import numpy.random
 import Image
+import os
+from gluon import *
 
 SitemapIndexURL = "http://manish.smugmug.com/sitemap-index.xml" 
 
@@ -47,20 +49,25 @@ def parseGalleryURLNodes(xmlToParse):
 	return rowset
 
 def insertRows(rowsToInsert):
-	con = lite.connect('testdb')
+	fn = os.path.join(current.request.folder, 'databases', 'testdb')
+	con = lite.connect(fn)
+	
 	with con:
 		cur = con.cursor()
 		cur.executemany("insert into image_urls(url,date_taken,gallery_name) values(?,?,?)", rowsToInsert) #inserts urls of images, date the picture was taken and the gallery name in a table
-	print "Done inserting URLs for gallery..."
+	#print "Done inserting URLs for gallery..."
 		
 def deleteURLs():
-	con = lite.connect('testdb')
+	fn = os.path.join(current.request.folder, 'databases', 'testdb')
+	con = lite.connect(fn)
 	with con:
 		cur = con.cursor()
 		cur.execute("DELETE FROM image_urls")	
 
 def getURLs():
-	con = lite.connect('testdb')
+	fn = os.path.join(current.request.folder, 'databases', 'testdb')
+	con = lite.connect(fn)
+
 	with con:
 		cur = con.cursor()
 		cur.execute("SELECT * FROM image_urls")
@@ -73,23 +80,38 @@ def getURLs():
 
 		return Images
 
+
 def getPageOfImages(offset, limit):
 	if (offset is None): 
 		offset = 0
 	if (limit is None):
 		limit = 5
 
-	con = lite.connect('testdb')
-	with con:
-		cur = con.cursor()
-		cur.execute("SELECT * FROM image_urls order by id limit " + str(limit) + " offset " + str(offset))
+	Images = []
+	try:
+		# os.path.join(request.folder, 'databases', 'testdb')
+		# dir_path = os.path.dirname(os.path.realpath(__file__))
+		fn = os.path.join(current.request.folder, 'databases', 'testdb')
 
-		rows = cur.fetchall()
-		Images = []
-		for row in rows:
-			image_obj = Image.Image(row)
-			Images.append(image_obj)
+		con = lite.connect(fn)
+		with con:
+			con.row_factory = lite.Row
+			cur = con.cursor()
+			cur.execute("SELECT * FROM image_urls order by id limit " + str(limit) + " offset " + str(offset))
 
+			rows = cur.fetchall()
+			for row in rows:
+				image_obj = Image.Image(row)
+				Images.append(image_obj)
+
+	except lite.Error, e:
+		print "Error %s:" % e.args[0]
+		sys.exit(1)
+
+	finally:
+		if con:
+			con.close()
+		# return map(list,rows) 
 		return Images
 
 
@@ -109,13 +131,13 @@ def initializeURLs():
 	random.shuffle(allTuples)
 	# 		deleteURLs()
 	insertRows(allTuples)
-	print allTuples
+	return len(allTuples)
 
+def getCountOfURLs():
+	fn = os.path.join(current.request.folder, 'databases', 'testdb')
+	con = lite.connect(fn)
+	with con:
+		cur = con.cursor()
+		cur.execute("SELECT COUNT(*) FROM image_urls")
+		return cur.fetchone()	
 
-
-	
-
-"""print "Done inserting all records..."
-for u in allTuples:
-	print u
-"""
