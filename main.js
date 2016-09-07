@@ -1,37 +1,35 @@
-
-function getUrls() {
+function getUrls(offset) {
 	var $btnPurgeData = $("#PurgeData");
 	var $btnPopulateData = $("#PopulateData");
 	var $btnGetData = $("#GetData");
 	var $divOutput = $("#output");
 
-
+	// if (offset != null || offset !== undefined) offset = 0;
+	console.log("fetching offset " + offset);
 	// Using the core $.ajax() method
 	$.ajax({
 	    url: "/slideshow/show/urls.json",
 	    data: {
-	        offset: 15,
-	        limit: 5
+	        offset: offset,
+	        limit: 1
 	    },
 	    type: "GET",
 	    dataType : "json"
 	})
-	  // Code to run if the request succeeds (is done);
+	  // Code to run if the reques	t succeeds (is done);
 	  // The response is passed to the function
 	  .done(function( json ) {
 			// alert(data[0].id + " | " + data[0].album + " | " + data[0].url + " | " + data[0].datataken); 
-			console.log(json);
-			
 			var urls = json.urls;
-			
-			var output="<ul>";
-            
-            for (var i=0; i< urls.length; i++) 
-            {
-                output+="<li>" + urls[i].id + ",  " + urls[i].album + ",  " + urls[i].url + ",  " + urls[i].datetaken +  "</li>";
-            }
-            output+="</ul>";
-            $divOutput.html(output);
+
+			var newDiv = $('<div><img id="OutputImage" src="' + urls[0].url + '"></div>');
+			newDiv.hide();
+
+			$('#output > div:first').fadeOut(2000);
+			$('#output > div:first').remove();
+
+			newDiv.appendTo("#output")
+			.fadeIn(2000);
 
 	  })
 	  // Code to run if the request fails; the raw request and
@@ -44,11 +42,21 @@ function getUrls() {
 	  })
 	  // Code to run regardless of success or failure;
 	  .always(function( xhr, status ) {
-	    console.log( "The request is complete!" );
+	    // console.log( "The request is complete!" );
 	  });
-
+	
 }
 
+function startSlideshow()
+{
+		var i = 0;
+			setInterval(function() { 
+			console.log("iterating thru " + i);
+			getUrls(i);	
+			i++;		
+			},  5000);
+
+}
 
 function xhr_get(url) {
 
